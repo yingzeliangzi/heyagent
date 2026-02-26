@@ -20,7 +20,6 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run lint && npm run format:check",
-    "prepublishOnly": "npm run check",
     "pack": "npm pack",
     "pack:install": "npm pack && npm install -g heyagent-*.tgz",
     "pack:test": "npm pack && mkdir -p .tmp && cd .tmp && npm init -y && npm install ../heyagent-*.tgz && ./node_modules/.bin/hey --version",

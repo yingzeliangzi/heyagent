@@ -1,24 +1,25 @@
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
 class Config {
   constructor() {
     this.configDir = path.join(os.homedir(), '.heyagent');
     this.configPath = path.join(this.configDir, 'config.json');
     this.defaults = {
-      notificationMethod: 'desktop',
-      notificationsEnabled: true,
-      email: null,
-      phoneNumber: null,
+      provider: null,
+      claudeArgs: [],
+      codexArgs: [],
+      telegramBotToken: null,
+      telegramBotUsername: null,
+      telegramBotId: null,
       telegramChatId: null,
-      webhookUrl: null,
-      slackWebhookUrl: null,
-      slackUsername: null,
-      licenseKey: null,
+      telegramChatUserId: null,
+      telegramUpdateCursor: 0,
+      claudeLastSessionId: null,
+      codexLastSessionId: null,
     };
     this._data = { ...this.defaults };
-    this.isFirstRun = !fs.existsSync(this.configPath);
     this.load();
   }
 
@@ -37,85 +38,90 @@ class Config {
   }
 
   save(newData = null) {
-    try {
-      if (newData) {
-        this._data = { ...this._data, ...newData };
-      }
-
-      if (!fs.existsSync(this.configDir)) {
-        fs.mkdirSync(this.configDir, { recursive: true });
-      }
-
-      fs.writeFileSync(this.configPath, JSON.stringify(this._data, null, 2));
-    } catch (error) {
-      console.error(`Failed to save config: ${error.message}`);
+    if (newData) {
+      this._data = { ...this._data, ...newData };
     }
+
+    if (!fs.existsSync(this.configDir)) {
+      fs.mkdirSync(this.configDir, { recursive: true });
+    }
+
+    fs.writeFileSync(this.configPath, JSON.stringify(this._data, null, 2));
+    return this._data;
   }
 
-  get(key) {
-    return this._data[key] ?? this.defaults[key];
+  setMany(data) {
+    return this.save(data);
   }
 
   set(key, value) {
     this._data[key] = value;
-    this.save();
+    return this.save();
   }
 
-  get data() {
-    return this._data;
+  get provider() {
+    return this._data.provider ?? this.defaults.provider;
   }
 
-  get notificationMethod() {
-    return this.get('notificationMethod');
+  get claudeArgs() {
+    const value = this._data.claudeArgs ?? this.defaults.claudeArgs;
+    return Array.isArray(value) ? value : [];
   }
 
-  get email() {
-    return this.get('email');
+  get codexArgs() {
+    const value = this._data.codexArgs ?? this.defaults.codexArgs;
+    return Array.isArray(value) ? value : [];
   }
 
-  get phoneNumber() {
-    return this.get('phoneNumber');
+  get telegramBotToken() {
+    return this._data.telegramBotToken ?? this.defaults.telegramBotToken;
+  }
+
+  get telegramBotUsername() {
+    return this._data.telegramBotUsername ?? this.defaults.telegramBotUsername;
+  }
+
+  get telegramBotId() {
+    return this._data.telegramBotId ?? this.defaults.telegramBotId;
   }
 
   get telegramChatId() {
-    return this.get('telegramChatId');
+    return this._data.telegramChatId ?? this.defaults.telegramChatId;
   }
 
-  get webhookUrl() {
-    return this.get('webhookUrl');
+  get telegramChatUserId() {
+    return this._data.telegramChatUserId ?? this.defaults.telegramChatUserId;
   }
 
-  get slackWebhookUrl() {
-    return this.get('slackWebhookUrl');
+  get telegramUpdateCursor() {
+    return this._data.telegramUpdateCursor ?? this.defaults.telegramUpdateCursor;
   }
 
-  get slackUsername() {
-    return this.get('slackUsername');
+  get codexLastSessionId() {
+    return this._data.codexLastSessionId ?? this.defaults.codexLastSessionId;
   }
 
-  get licenseKey() {
-    return this.get('licenseKey');
+  get claudeLastSessionId() {
+    return this._data.claudeLastSessionId ?? this.defaults.claudeLastSessionId;
   }
 
-  get notificationsEnabled() {
-    return this.get('notificationsEnabled');
+  isPaired() {
+    return Boolean(this.telegramBotToken && this.telegramChatId);
   }
 
-  clearLicenseKey() {
-    this.set('licenseKey', null);
-  }
+  clearPairing(options = {}) {
+    const keepBotToken = options.keepBotToken !== false;
 
-  validateConfig(method = null) {
-    method = method || this.notificationMethod;
-    if (!this.notificationsEnabled) return true;
-
-    if (method === 'email') return !!this.email;
-    if (method === 'whatsapp') return !!this.phoneNumber;
-    if (method === 'telegram') return !!this.telegramChatId;
-    if (method === 'slack') return !!this.slackWebhookUrl && !!this.slackUsername;
-    if (method === 'webhook') return !!this.webhookUrl;
-
-    return true;
+    this.save({
+      telegramBotToken: keepBotToken ? this.telegramBotToken : null,
+      telegramBotUsername: keepBotToken ? this.telegramBotUsername : null,
+      telegramBotId: keepBotToken ? this.telegramBotId : null,
+      telegramChatId: null,
+      telegramChatUserId: null,
+      telegramUpdateCursor: 0,
+      claudeLastSessionId: null,
+      codexLastSessionId: null,
+    });
   }
 }
 

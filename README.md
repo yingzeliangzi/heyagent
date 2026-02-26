@@ -1,104 +1,132 @@
-# HeyAgent
+# HeyAgent CLI
 
-### Get notified when Claude Code and Codex CLI need your attention!
+HeyAgent CLI is a bidirectional Telegram bridge for Claude Code and Codex.
+Send and receive Telegram messages with Codex or Claude (and switch any time).
 
-HeyAgent supports most of the CLI coding agents, use it for free!
+Fully free, fully open source, and fully local — no server or external storage required.
+
+### v2 Update
+
+Note: before v2, this project focused on notification integration for CLI coding agents.
 
 ## Installation
-
-Install globally via npm:
 
 ```bash
 npm install -g heyagent
 ```
 
-## Quick Start
-
-1. Install the package globally
-2. Run `hey claude` to start Claude Code with notifications
-3. Or run `hey codex` to start OpenAI Codex CLI with notifications
-4. Or run `hey gemini/droid/...` to start any CLI agent with notifications
-
 ## Usage
 
-### Basic Commands
-
 ```bash
-# Start Claude Code with notifications
+# Resume latest session (default)
 hey claude
-
-# Start Codex CLI with notifications
 hey codex
 
-# Start Gemini CLI with notifications
-hey gemini
+# Create new session
+hey claude --new
+hey codex --new
 
-# Start basically any CLI coding agent with notifications!
-hey [YOUR-AGENT]
+# Run with explicit session id
+hey claude --session [SESSION-ID]   # resumes given session
+hey codex --session [SESSION-ID]    # resumes given session
 
-# Pass arguments to Claude/Codex
-hey claude --help
-hey claude -c    # Continue last session
-hey codex resume --latest    # Continue last session
+# Show local pairing/session status
+hey status
 
-# Configure notification settings
-hey config
+# Reset Telegram setup (clears bot token + chat pairing)
+hey reset
 
-# Manage license for paid notification channels
-hey license
-
-# Toggle notifications
-hey on           # Enable notifications
-hey off          # Disable notifications
-
-# Setup without starting Claude (hooks and slash commands)
-hey setup claude
-
-# Show help
-hey help
+# Non-interactive reset
+hey reset --yes
 ```
 
-### Notification Methods
+## Setup and Pairing Flow
 
-HeyAgent supports multiple notification methods:
+Start with `hey claude` or `hey codex`.
 
-- **Desktop notifications** (default)
-- **Email notifications\***
-- **WhatsApp notifications\***
-- **Telegram notifications\***
-- **Slack notifications\***
-- **Custom webhook notifications**
+On first run, HeyAgent will:
 
-Configure your preferred method with `hey config`.
+1. Ask for setup mode:
+   - **Phone setup** (recommended) — scan one QR code and complete guided steps on your phone
+   - **Manual fallback** — no tunnel required; paste the bot token directly into the terminal
+2. In phone setup mode, CLI starts a temporary local server exposed via a Cloudflare Quick Tunnel and shows a single QR code. (This same tool is handy for reaching your local dev environment from your phone.)
+3. Complete guided steps on phone:
+   - Open BotFather
+   - Create your own bot
+   - Submit bot token
+   - Open bot chat and press START
+4. CLI validates token, waits for pairing, and stores bot + chat locally.
 
-\*Pro notification channels require a license. Run `hey license` to set up.
+Manual fallback avoids tunneling completely:
 
-### Slash Commands (within Claude Code only)
+1. Create your own bot
+2. Paste bot token into the terminal.
+3. CLI shows bot opening link/QR for pairing.
 
-While Claude is running, you can use:
+If recommended phone onboarding fails in your environment, install system `cloudflared`
+(for example `brew install cloudflared`) or choose manual fallback.
 
-```
-/hey on          # Enable notifications
-/hey off         # Disable notifications
-```
+## Telegram Commands
 
-## How It Works
+Inside Telegram:
 
-HeyAgent wraps your Claude Code or Codex CLI session:
+- `/help` list commands
+- `/new` force next prompt to run as a new session
+- `/claude` switch active provider to Claude
+- `/codex` switch active provider to Codex
+- `/status` show provider, directory, bot, session, and pairing
+- `/stop` stop current execution and clear queued messages
 
-- Claude Code: uses hooks and slash commands for event-driven notifications.
-- Codex CLI: listens to stdout and sends a notification after inactivity.
+Any other text message is forwarded to the active agent.
+For voice input, keyboard dictation on your phone is recommended.
 
-## Requirements
+## Local CLI Input
 
-- Node.js 18 or higher
-- Claude Code CLI or OpenAI Codex CLI installed
-- HeyAgent license for paid notification channels
+When running in an interactive terminal, HeyAgent also accepts live local input.
 
-## Support
+- Plain text: run prompt through provider and send response to Telegram
+- `/ask <prompt>` same as plain text
+- `/say <text>` send raw message directly to Telegram
+- `/new` force next prompt to start a fresh session
+- `/stop` stop current execution and clear queued Telegram messages
+- `/claude` switch to Claude provider
+- `/codex` switch to Codex provider
+- `/status` print local bridge status
+- `/help` show local commands
+- `/exit` stop the running bridge
 
-- Official website: https://heyagent.dev
-- Issues: Report bugs and feature requests on GitHub
+CLI logs are shown for inbound Telegram commands, local prompts, and outgoing messages.
+
+## Provider Execution
+
+Default runtime:
+
+- `claude --dangerously-skip-permissions -p --output-format json "<prompt>"`
+- `codex exec --dangerously-bypass-approvals-and-sandbox --json "<prompt>"`
+
+You can override default bypass behavior by passing explicit provider permission flags, for example:
+
+- `hey claude --permission-mode acceptEdits`
+- `hey codex --full-auto`
+
+Session startup strategy:
+
+- `--new` force first prompt to start fresh session
+- `--session <session-id>` : resumes the session given by its id
+- default (no startup flag): same as `--resume` / `--continue`, resume latest in current provider/project
+
+## Notes
+
+- Fully local-served
+- Sleep prevention is always enabled while bridge is running.
+- Lid-close sleep is not reliably controllable by app-level code:
+  - macOS: use clamshell mode setup (external power/display/input) for closed-lid operation.
+  - Windows/Linux: requires OS power settings or admin-level policy changes.
+- Polling-only runtime (no webhooks).
+- One chat per running CLI process.
+- If you send new messages while a request is in progress, HeyAgent queues and groups those messages into the next run.
+- Telegram attachments are forwarded to the active provider (documents, images, audio, voice notes, and videos).
+- Config is stored at `~/.heyagent/config.json`
 
 ## License
 

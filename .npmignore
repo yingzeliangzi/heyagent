@@ -52,6 +52,7 @@ build/
 # ESLint and Prettier
 .eslintrc*
 .prettierrc*
+.prettierignore
 eslint.config.js
 
 # Package manager files

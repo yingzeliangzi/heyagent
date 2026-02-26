@@ -1,8 +1,8 @@
 {
   "name": "heyagent",
-  "version": "0.1.0",
-  "description": "HeyAgent.dev - Get notified when Claude Code or Codex CLI need you",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "HeyAgent.dev - Bidirectional Telegram bridge for Claude Code and Codex",
+  "main": "src/bridge.js",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"
@@ -12,7 +12,9 @@
   },
   "scripts": {
     "start": "./bin/hey.js",
-    "push": "git add . && git commit -m 'Update' && git push",
+    "dev:watch:claude": "node --watch --watch-path=src --watch-path=bin --watch-preserve-output ./bin/hey.js claude",
+    "dev:watch:codex": "node --watch --watch-path=src --watch-path=bin --watch-preserve-output ./bin/hey.js codex",
+    "dev:watch:status": "node --watch --watch-path=src --watch-path=bin --watch-preserve-output ./bin/hey.js status",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -32,7 +34,8 @@
   },
   "keywords": [
     "claude",
-    "notifications",
+    "codex",
+    "telegram",
     "cli",
     "terminal",
     "heyagent"
@@ -54,16 +57,14 @@
     "LICENSE"
   ],
   "dependencies": {
-    "node-notifier": "^10.0.1",
-    "@lydell/node-pty": "^1.0.0",
+    "@inquirer/prompts": "^8.3.0",
+    "cloudflared": "^0.7.1",
     "node-telegram-bot-api": "^0.66.0",
-    "prompts": "^2.4.2",
-    "qrcode-terminal": "^0.12.0",
-    "uuid": "^11.1.0"
+    "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
-    "eslint": "^9.0.0",
     "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
     "prettier": "^3.0.0"
   }
 }

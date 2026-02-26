@@ -1,6 +1,6 @@
-import { promises as fs } from 'fs';
-import path from 'path';
-import os from 'os';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
 let logDirEnsured = false;
 
@@ -45,16 +45,8 @@ class Logger {
     this.log('error', msg);
   }
 
-  info(msg) {
-    this.log('info', msg);
-  }
-
   warn(msg) {
     this.log('warn', msg);
-  }
-
-  debug(msg) {
-    this.log('debug', msg);
   }
 }
 
